@@ -4,7 +4,7 @@ import * as three from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { getSceneAndAnimations } from "./scene";
 
-const ADD_HELPERS = false;
+const ADD_HELPERS = true;
 
 // Create renderer and camera
 const canvas = document.querySelector<HTMLCanvasElement>("canvas#scene") ?? undefined;
@@ -13,12 +13,13 @@ if (!canvas) {
 }
 const renderer = new three.WebGLRenderer({ canvas });
 const camera = new three.PerspectiveCamera(
-  75,
+  40,
   renderer.domElement.clientWidth / renderer.domElement.clientHeight,
   0.1,
-  1000,
+  10000,
 );
-camera.position.set(0, 0, 30);
+camera.position.set(478, 278, -600);
+camera.updateProjectionMatrix();
 
 /**
  * Resizes the renderer and camera if necessary.
@@ -42,6 +43,7 @@ const { scene, animations } = getSceneAndAnimations(ADD_HELPERS);
 
 // Adds controls
 const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(200, 278, 280);
 
 // Create animation loop
 function animationLoop() {
