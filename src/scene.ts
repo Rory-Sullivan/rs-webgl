@@ -1,6 +1,7 @@
 import * as three from "three";
 import { RectAreaLightHelper } from "three/addons/helpers/RectAreaLightHelper.js";
-import { FlakesTexture, OBJLoader } from "three/examples/jsm/Addons.js";
+import { OBJLoader } from "three/examples/jsm/Addons.js";
+import { getPerlinTextureCanvas } from "./perlinTexture";
 
 export function getSceneAndAnimations(
   addHelpers: boolean,
@@ -44,15 +45,11 @@ export function getSceneAndAnimations(
   scene.add(...groundBoxes);
 
   // Make a light
-  const rectLight = new three.RectAreaLight(0xffffff, 4, 646, 265);
+  const rectLight = new three.RectAreaLight(0xffffff, 6, 646, 265);
   rectLight.position.set(200, 554, 280);
   rectLight.lookAt(200, 0, 280);
   const rectLightHelper = new RectAreaLightHelper(rectLight);
   scene.add(rectLight, rectLightHelper);
-
-  const pointLight = new three.PointLight(0xffffff, 4, 0, 0.5);
-  pointLight.position.set(200, 554, 280);
-  scene.add(pointLight);
 
   // Add a moving sphere
   const movingSphereMaterial = new three.MeshPhysicalMaterial({
@@ -135,6 +132,41 @@ export function getSceneAndAnimations(
   earthSphere.position.set(500.0, 225.0, 400.0);
   scene.add(earthSphere);
 
+  // Add a perlin noise sphere
+  const perlinTexture = new three.CanvasTexture(
+    getPerlinTextureCanvas(new three.Color(0.1, 0.1, 0.1)),
+  );
+  perlinTexture.repeat = new three.Vector2(10, 5);
+  perlinTexture.wrapS = three.RepeatWrapping;
+  perlinTexture.wrapT = three.RepeatWrapping;
+  const perlinSphere = new three.Mesh(
+    new three.SphereGeometry(80),
+    new three.MeshPhysicalMaterial({
+      color: new three.Color(0.5, 0.5, 0.5),
+      map: perlinTexture,
+    }),
+  );
+  perlinSphere.position.set(82.0, 370.0, 484.0);
+  scene.add(perlinSphere);
+
+  // Add a random assortment of white spheres in a translated rotated box
+  const spheres = new three.Group();
+  const white = new three.MeshPhysicalMaterial({ color: new three.Color(0.73, 0.73, 0.73) });
+  const sphereGeometry = new three.SphereGeometry(10);
+  const sphere = new three.Mesh(sphereGeometry, white);
+  for (let i = 0; i < 1000; i++) {
+    const sphereCopy = sphere.clone();
+    sphereCopy.position.set(
+      three.MathUtils.randFloat(0, 165),
+      three.MathUtils.randFloat(0, 165),
+      three.MathUtils.randFloat(0, 165),
+    );
+    spheres.add(sphereCopy);
+  }
+  spheres.rotateY(0.262);
+  spheres.position.set(-250.0, 270.0, 395.0);
+  scene.add(spheres);
+
   // Set environment maps where necessary
   const pmremGenerator = new three.PMREMGenerator(renderer);
   function setEnvironmentMaps() {
@@ -185,38 +217,6 @@ export function getSceneAndAnimations(
     const gridHelper = new three.GridHelper(10000, 100);
     scene.add(gridHelper);
   }
-
-  // Add a perlin noise sphere
-  const perlinTexture = new three.CanvasTexture(new FlakesTexture());
-  perlinTexture.wrapS = three.RepeatWrapping;
-  perlinTexture.wrapT = three.RepeatWrapping;
-  const perlinSphere = new three.Mesh(
-    new three.SphereGeometry(80),
-    new three.MeshPhysicalMaterial({
-      color: new three.Color(0.2, 0.2, 0.2),
-      map: perlinTexture,
-    }),
-  );
-  perlinSphere.position.set(82.0, 370.0, 484.0);
-  scene.add(perlinSphere);
-
-  // Add a random assortment of white spheres in a translated rotated box
-  const spheres = new three.Group();
-  const white = new three.MeshPhysicalMaterial({ color: new three.Color(0.73, 0.73, 0.73) });
-  const sphereGeometry = new three.SphereGeometry(10);
-  const sphere = new three.Mesh(sphereGeometry, white);
-  for (let i = 0; i < 1000; i++) {
-    const sphereCopy = sphere.clone();
-    sphereCopy.position.set(
-      three.MathUtils.randFloat(0, 165),
-      three.MathUtils.randFloat(0, 165),
-      three.MathUtils.randFloat(0, 165),
-    );
-    spheres.add(sphereCopy);
-  }
-  spheres.rotateY(0.262);
-  spheres.position.set(-250.0, 270.0, 395.0);
-  scene.add(spheres);
 
   return { scene, animations };
 }
