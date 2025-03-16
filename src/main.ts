@@ -4,7 +4,7 @@ import * as three from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { getSceneAndAnimations } from "./scene";
 
-const ADD_HELPERS = true;
+const ADD_HELPERS = false;
 
 // Create renderer and camera
 const canvas = document.querySelector<HTMLCanvasElement>("canvas#scene") ?? undefined;

@@ -32,13 +32,9 @@ main {
   position: absolute;
   margin: 0px auto;
   padding: 0.5rem;
-
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
 }
 
 header {
-  grid-column: 1 / span 6;
   font-size: 0.8rem;
   padding: 0px;
 }
@@ -54,14 +50,12 @@ h1 {
 }
 
 section {
-  grid-column: 2 / 8;
-  padding: 1rem;
-  background: var(--dark-bg);
-  font-size: 1.25rem;
-  line-height: 1.5;
-  margin-bottom: var(--spacing);
+  padding: 0px;
+  margin: 0px;
+  font-size: 1rem;
 }
-
-.left {
-  grid-column: 6 / 12;
+section > ul {
+  background: var(--dark-bg);
+  display: inline-block;
+  padding: 0.5rem 0.5rem 0.5rem 1.5rem;
 }
