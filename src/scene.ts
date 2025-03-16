@@ -1,9 +1,11 @@
 import * as three from "three";
 import { RectAreaLightHelper } from "three/addons/helpers/RectAreaLightHelper.js";
-import { FlakesTexture } from "three/examples/jsm/Addons.js";
-import { OBJLoader } from "three/examples/jsm/Addons.js";
+import { FlakesTexture, OBJLoader } from "three/examples/jsm/Addons.js";
 
-export function getSceneAndAnimations(addHelpers: boolean): {
+export function getSceneAndAnimations(
+  addHelpers: boolean,
+  renderer: three.WebGLRenderer,
+): {
   scene: three.Scene;
   animations: (() => undefined)[];
 } {
@@ -52,23 +54,6 @@ export function getSceneAndAnimations(addHelpers: boolean): {
   pointLight.position.set(200, 554, 280);
   scene.add(pointLight);
 
-  // Add a gold dragon
-  const dragonMaterial = new three.MeshPhysicalMaterial({
-    color: 0xffd700,
-  });
-  const objLoader = new OBJLoader();
-  objLoader.load("/rs-webgl/dragon.obj", (root) => {
-    root.traverse((child) => {
-      if (child instanceof three.Mesh) {
-        child.material = dragonMaterial;
-      }
-    });
-    root.scale.set(400.0, 400.0, 400.0);
-    root.rotateY(-1.5);
-    root.position.set(200.0, 238.0, 200.0);
-    scene.add(root);
-  });
-
   // Add a moving sphere
   const movingSphereMaterial = new three.MeshPhysicalMaterial({
     color: new three.Color(0.7, 0.3, 0.1),
@@ -87,42 +72,54 @@ export function getSceneAndAnimations(addHelpers: boolean): {
   });
 
   // Add a dielectric (glass) sphere
-  const sphere0Material = new three.MeshPhysicalMaterial({
-    color: new three.Color(0.7, 0.7, 0.7),
-  });
-  const sphere0Geometry = new three.SphereGeometry(50);
-  const sphere0 = new three.Mesh(sphere0Geometry, sphere0Material);
-  sphere0.position.set(175.0, 175.0, 45.0);
-  scene.add(sphere0);
+  const glassSphere = new three.Mesh(
+    new three.SphereGeometry(50),
+    new three.MeshPhysicalMaterial({
+      color: new three.Color(0.7, 0.7, 0.7),
+      roughness: 0.1,
+      transmission: 1,
+      ior: 7,
+      thickness: 10,
+    }),
+  );
+  glassSphere.position.set(175.0, 175.0, 45.0);
+  scene.add(glassSphere);
 
   // Add a red pyramid
   const pyr0 = new three.Mesh(
     new three.ConeGeometry(40, 75),
-    new three.MeshPhysicalMaterial({ color: new three.Color(0.65, 0.05, 0.05) }),
+    new three.MeshPhysicalMaterial({
+      color: new three.Color(0.65, 0.05, 0.05),
+    }),
   );
   pyr0.position.set(70.0, 175.0, 92.0);
   scene.add(pyr0);
 
   // Add a metal sphere
-  const sphere1 = new three.Mesh(
+  const metalSphere = new three.Mesh(
     new three.SphereGeometry(50),
     new three.MeshPhysicalMaterial({
       color: new three.Color(0.8, 0.8, 0.9),
+      metalness: 1,
+      roughness: 0.15,
     }),
   );
-  sphere1.position.set(-50.0, 175.0, 156.0);
-  scene.add(sphere1);
+  metalSphere.position.set(-50.0, 175.0, 156.0);
+  scene.add(metalSphere);
 
   // Add a blue subsurface reflection sphere by putting a volume inside a
   // dielectric sphere.
-  const sphere2 = new three.Mesh(
+  const blueSphere = new three.Mesh(
     new three.SphereGeometry(60),
     new three.MeshPhysicalMaterial({
-      color: new three.Color(0.2, 0.4, 0.9),
+      color: 0x0a1584,
+      transmission: 0.1,
+      clearcoat: 1,
+      clearcoatRoughness: 0,
     }),
   );
-  sphere2.position.set(460.0, 185.0, 145.0);
-  scene.add(sphere2);
+  blueSphere.position.set(460.0, 185.0, 145.0);
+  scene.add(blueSphere);
 
   // Add an Earth sphere
   const loader = new three.TextureLoader();
@@ -131,13 +128,50 @@ export function getSceneAndAnimations(addHelpers: boolean): {
   const earthSphere = new three.Mesh(
     new three.SphereGeometry(100),
     new three.MeshPhysicalMaterial({
-      color: new three.Color(0.2, 0.4, 0.9),
       map: texture,
     }),
   );
   earthSphere.rotateY(1.361);
   earthSphere.position.set(500.0, 225.0, 400.0);
   scene.add(earthSphere);
+
+  // Set environment maps where necessary
+  const pmremGenerator = new three.PMREMGenerator(renderer);
+  function setEnvironmentMaps() {
+    glassSphere.material.envMap = pmremGenerator.fromScene(scene, undefined, undefined, 10000, {
+      position: glassSphere.position,
+    }).texture;
+    metalSphere.material.envMap = pmremGenerator.fromScene(scene, undefined, undefined, 10000, {
+      position: metalSphere.position,
+    }).texture;
+    blueSphere.material.envMap = pmremGenerator.fromScene(scene, undefined, undefined, 10000, {
+      position: blueSphere.position,
+    }).texture;
+  }
+  setEnvironmentMaps();
+
+  // Add a gold dragon
+  const dragonMaterial = new three.MeshPhysicalMaterial({
+    color: 0xffd700,
+    metalness: 0.5,
+    roughness: 0.15,
+  });
+  const objLoader = new OBJLoader();
+  objLoader.load("/rs-webgl/dragon.obj", (root) => {
+    root.traverse((child) => {
+      if (child instanceof three.Mesh) {
+        child.material = dragonMaterial;
+      }
+    });
+    root.scale.set(400.0, 400.0, 400.0);
+    root.rotateY(-1.5);
+    root.position.set(200.0, 238.0, 200.0);
+    scene.add(root);
+    dragonMaterial.envMap = pmremGenerator.fromScene(scene, undefined, undefined, 10000, {
+      position: root.position,
+    }).texture;
+    setEnvironmentMaps();
+  });
 
   // Add helpers
   // Add direction arrows

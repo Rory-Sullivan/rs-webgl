@@ -39,7 +39,7 @@ function resize(renderer: three.WebGLRenderer, camera: three.PerspectiveCamera) 
 }
 
 // Create scene
-const { scene, animations } = getSceneAndAnimations(ADD_HELPERS);
+const { scene, animations } = getSceneAndAnimations(ADD_HELPERS, renderer);
 
 // Adds controls
 const controls = new OrbitControls(camera, renderer.domElement);
